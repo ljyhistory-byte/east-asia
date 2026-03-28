@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>동아시아 역사 통합 타임라인</title>
+    <style>
+        body {
+            font-family: 'Malgun Gothic', sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f8f9fa;
+            color: #333;
+        }
+
+        h1 {
+            text-align: center;
+            color: #2c3e50;
+        }
+
+        .container {
+            display: flex;
+            gap: 20px;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        /* 컨트롤 패널 */
+        .control-panel {
+            flex: 1;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            max-height: 85vh;
+            overflow-y: auto;
+        }
+
+        .control-panel h3 {
+            margin-top: 0;
+            border-bottom: 2px solid #eee;
+            padding-bottom: 10px;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        button {
+            background-color: #2c3e50;
+            color: white;
+            border: none;
+            padding: 10px;
+            border-radius: 4px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background-color 0.2s;
+            flex: 1;
+            font-size: 13px;
+        }
+
+        button:hover { background-color: #1a252f; }
+
+        .secondary-btn {
+            background-color: #95a5a6;
+        }
+        .secondary-btn:hover { background-color: #7f8c8d; }
+
+        .region-group { margin-bottom: 20px; }
+        .region-title {
+            font-weight: bold;
+            font-size: 15px;
+            color: #2c3e50;
+            margin-bottom: 8px;
+            border-bottom: 1px dashed #ccc;
+            padding-bottom: 5px;
+        }
+        .region-items {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+        }
+        .region-items label {
+            cursor: pointer;
+            font-size: 12px;
+            display: flex;
+            align-items: center;
+        }
+
+        /* 타임라인 캔버스 */
+        .timeline-area {
+            flex: 3;
+            background: white;
+            padding: 20px 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            position: relative;
+            overflow-x: hidden;
+            max-height: 85vh;
+            overflow-y: auto;
+        }
+
+        .axis {
+            border-bottom: 2px solid #333;
+            margin-bottom: 20px;
+            padding-bottom: 5px;
+            position: sticky;
+            top: 0;
+            background: white;
+            z-index: 5;
+            height: 30px;
+            color: #7f8c8d;
+            font-size: 14px;
+            font-weight: bold;
+        }
+        
+        .axis span {
+            position: absolute;
+            transform: translateX(-50%);
+        }
+
+        .timeline-track {
+            position: relative;
+            height: 35px;
+            margin-bottom: 10px;
+            background-color: transparent;
+            border-bottom: 1px dashed #ecf0f1;
+        }
+
+        .bar {
+            position: absolute;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            padding: 0 10px;
+            border-radius: 4px;
+            font-size: 13px;
+            box-sizing: border-box;
+            white-space: nowrap;
+            overflow: hidden;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+            color: white;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .bar:hover {
+            filter: brightness(1.1);
+            transform: scaleY(1.15);
+            z-index: 10;
+            border: 2px solid #fff;
+        }
+
+        .bar.korea { background-color: #3498db; }
+        .bar.china { background-color: #e74c3c; }
+        .bar.japan { background-color: #2ecc71; }
+        .bar.nomad { background-color: #f39c12; }
+        
+        /* 툴팁 스타일 */
+        #tooltip {
+            position: fixed;
+            background: rgba(44, 62, 80, 0.95);
+            color: white;
+            padding: 15px;
+            border-radius: 8px;
+            font-size: 13px;
+            pointer-events: none;
+            display: none;
+            z-index: 1000;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+            max-width: 300px;
+            line-height: 1.5;
+        }
+        #tooltip h4 { margin: 0 0 10px 0; color: #f1c40f; font-size: 16px; border-bottom: 1px solid #7f8c8d; padding-bottom: 5px;}
+        #tooltip p { margin: 5px 0; }
+        #tooltip .note { margin-top: 10px; font-style: italic; color: #bdc3c7; }
+
+        .legend {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            margin-bottom: 20px;
+            font-size: 14px;
+        }
+        .legend span { display: inline-block; width: 15px; height: 15px; margin-right: 5px; vertical-align: middle; border-radius: 3px;}
+
+    </style>
+</head>
+<body>
+
+    <h1>동아시아 국가 유지 기간 시각화</h1>
+    
+    <div class="legend">
+        <div><span style="background-color: #3498db;"></span>한국</div>
+        <div><span style="background-color: #e74c3c;"></span>중국</div>
+        <div><span style="background-color: #2ecc71;"></span>일본</div>
+        <div><span style="background-color: #f39c12;"></span>북방민족</div>
+    </div>
+
+    <div class="container">
+        <aside class="control-panel">
+            <h3>개별 국가 선택</h3>
+            <div class="action-buttons">
+                <button id="selectAllBtn" class="secondary-btn">전체 선택</button>
+                <button id="deselectAllBtn" class="secondary-btn">전체 해제</button>
+            </div>
+            <div id="countryList"></div>
+        </aside>
+
+        <section class="timeline-area">
+            <div class="axis" id="axis"></div>
+            <div id="chart"></div>
+        </section>
+    </div>
+
+    <div id="tooltip"></div>
+
+    <script>
+        const historicalData = [
+            { id: "c1", region: "china", name: "주 (서주/동주)", startText: "BC 1046년경", endText: "BC 256년", duration: "약 790년", note: "기원전 770년 낙읍 천도를 기점으로 서주/동주로 나뉨", start: -1046, end: -256 },
+            { id: "c2", region: "china", name: "춘추전국시대", startText: "BC 770년", endText: "BC 221년", duration: "약 549년", note: "동주 시대와 겹치며, 진(秦)의 통일로 종결", start: -770, end: -221 },
+            { id: "c3", region: "china", name: "진 (통일왕조)", startText: "BC 221년", endText: "BC 206년", duration: "15년", note: "제국 통일(BC 221) 기준 (제후국 시절 포함 시 더 김)", start: -221, end: -206 },
+            { id: "c4", region: "china", name: "한 (전한/후한)", startText: "BC 202년", endText: "AD 220년", duration: "406년", note: "신(新)나라(AD 8~23) 단절기 15년 제외", start: -202, end: 220 },
+            { id: "c5", region: "china", name: "서진", startText: "266년", endText: "316년", duration: "50년", note: "280년에 삼국 통일", start: 266, end: 316 },
+            { id: "c6", region: "china", name: "동진", startText: "317년", endText: "420년", duration: "103년", note: "", start: 317, end: 420 },
+            { id: "c7", region: "china", name: "북위", startText: "386년", endText: "534년", duration: "148년", note: "439년 화북 통일", start: 386, end: 534 },
+            { id: "c8", region: "china", name: "동위", startText: "534년", endText: "550년", duration: "16년", note: "북위에서 분열", start: 534, end: 550 },
+            { id: "c9", region: "china", name: "서위", startText: "535년", endText: "557년", duration: "22년", note: "북위에서 분열", start: 535, end: 557 },
+            { id: "c10", region: "china", name: "북주", startText: "557년", endText: "581년", duration: "24년", note: "서위의 뒤를 이음", start: 557, end: 581 },
+            { id: "c11", region: "china", name: "북제", startText: "550년", endText: "577년", duration: "27년", note: "동위의 뒤를 이음", start: 550, end: 577 },
+            { id: "c12", region: "china", name: "송 (남조/유송)", startText: "420년", endText: "479년", duration: "59년", note: "동진 멸망 후 건국", start: 420, end: 479 },
+            { id: "c13", region: "china", name: "제 (남조/남제)", startText: "479년", endText: "502년", duration: "23년", note: "", start: 479, end: 502 },
+            { id: "c14", region: "china", name: "양 (남조)", startText: "502년", endText: "557년", duration: "55년", note: "", start: 502, end: 557 },
+            { id: "c15", region: "china", name: "진 (남조)", startText: "557년", endText: "589년", duration: "32년", note: "수나라에 의해 멸망", start: 557, end: 589 },
+            { id: "c16", region: "china", name: "수", startText: "581년", endText: "618년", duration: "37년", note: "589년 남북조 통일", start: 581, end: 618 },
+            { id: "c17", region: "china", name: "당", startText: "618년", endText: "907년", duration: "289년", note: "무주(측천무후) 시기 포함", start: 618, end: 907 },
+            { id: "c18", region: "china", name: "오대십국", startText: "907년", endText: "979년", duration: "72년", note: "당 멸망부터 북송의 통일까지의 혼란기", start: 907, end: 979 },
+            { id: "c19_1", region: "china", name: "북송", startText: "960년", endText: "1127년", duration: "167년", note: "정강의 변(1127년)으로 화북 상실 및 남하", start: 960, end: 1127 },
+            { id: "c19_2", region: "china", name: "남송", startText: "1127년", endText: "1279년", duration: "152년", note: "임안(항저우)으로 천도하여 명맥 유지, 애산 전투에서 멸망", start: 1127, end: 1279 },
+            { id: "c20", region: "china", name: "요 (거란)", startText: "916년", endText: "1125년", duration: "209년", note: "", start: 916, end: 1125 },
+            { id: "c21", region: "china", name: "금 (여진)", startText: "1115년", endText: "1234년", duration: "119년", note: "", start: 1115, end: 1234 },
+            { id: "c22", region: "china", name: "원 (몽골)", startText: "1271년", endText: "1368년", duration: "97년", note: "국호를 '대원'으로 고친 시점~북주(몽골 초원 퇴각) 기준", start: 1271, end: 1368 },
+            { id: "c23", region: "china", name: "명", startText: "1368년", endText: "1644년", duration: "276년", note: "", start: 1368, end: 1644 },
+            { id: "c24", region: "china", name: "청", startText: "1636년", endText: "1912년", duration: "276년", note: "국호를 '청'으로 고친 시점(1636) ~ 신해혁명 멸망 기준", start: 1636, end: 1912 },
+            
+            { id: "j1", region: "japan", name: "야마토 정권", startText: "3세기 중후반", endText: "710년", duration: "약 400년 이상", note: "정확한 성립 연도는 불명확 (고분 시대)", start: 250, end: 710 },
+            { id: "j2", region: "japan", name: "나라 시대", startText: "710년", endText: "794년", duration: "84년", note: "헤이조쿄(나라) 도읍 시기", start: 710, end: 794 },
+            { id: "j3", region: "japan", name: "헤이안 시대", startText: "794년", endText: "1185년", duration: "391년", note: "헤이안쿄(교토) 천도 ~ 가마쿠라 막부 성립 전", start: 794, end: 1185 },
+            { id: "j4", region: "japan", name: "가마쿠라 막부", startText: "1185년", endText: "1333년", duration: "148년", note: "미나모토노 요리토모의 슈고/지토 설치(1185) 기준", start: 1185, end: 1333 },
+            { id: "j5", region: "japan", name: "무로마치 막부", startText: "1336년", endText: "1573년", duration: "237년", note: "아시카가 타카우지 건국 ~ 오다 노부나가에 의한 멸망", start: 1336, end: 1573 },
+            { id: "j6", region: "japan", name: "센고쿠 시대", startText: "1467년", endText: "1615년", duration: "약 148년", note: "오닌의 난(1467) ~ 오사카 여름의 진(1615) 통상적 기준", start: 1467, end: 1615 },
+            { id: "j7", region: "japan", name: "에도 막부", startText: "1603년", endText: "1868년", duration: "265년", note: "도쿠가와 이에야스 취임 ~ 대정봉환/메이지 유신", start: 1603, end: 1868 },
+            
+            { id: "k1", region: "korea", name: "고조선", startText: "BC 2333년(신화)", endText: "BC 108년", duration: "약 2,225년(전승)", note: "실질적인 연맹국가는 기원전 4~5세기경 추정", start: -2333, end: -108 },
+            { id: "k2", region: "korea", name: "고구려", startText: "BC 37년", endText: "AD 668년", duration: "704년", note: "삼국사기 기준 연도", start: -37, end: 668 },
+            { id: "k3", region: "korea", name: "백제", startText: "BC 18년", endText: "AD 660년", duration: "677년", note: "삼국사기 기준 연도", start: -18, end: 660 },
+            { id: "k4", region: "korea", name: "신라", startText: "BC 57년", endText: "AD 935년", duration: "991년", note: "이른바 '천년 왕국'", start: -57, end: 935 },
+            { id: "k5", region: "korea", name: "고려", startText: "918년", endText: "1392년", duration: "474년", note: "", start: 918, end: 1392 },
+            { id: "k6", region: "korea", name: "조선", startText: "1392년", endText: "1910년", duration: "518년", note: "1897년 선포된 대한제국 시기 포함", start: 1392, end: 1910 },
+            
+            { id: "n1", region: "nomad", name: "흉노", startText: "BC 3세기 말", endText: "AD 1세기 말", duration: "약 300년", note: "묵돌 선우의 통일(BC 209년경) 기준", start: -210, end: 90 },
+            { id: "n2", region: "nomad", name: "유연", startText: "330년", endText: "555년", duration: "225년", note: "돌궐에 의해 멸망", start: 330, end: 555 },
+            { id: "n3", region: "nomad", name: "돌궐", startText: "552년", endText: "744년", duration: "192년", note: "1제국, 동서분열, 2제국 시기 합산", start: 552, end: 744 },
+            { id: "n4", region: "nomad", name: "토번 (티베트)", startText: "618년", endText: "842년", duration: "224년", note: "송첸캄포의 통일 ~ 랑다르마 왕 암살 후 분열", start: 618, end: 842 },
+            { id: "n5", region: "nomad", name: "서하 (탕구트)", startText: "1038년", endText: "1227년", duration: "189년", note: "이원호 건국 ~ 몽골 제국에 의해 멸망", start: 1038, end: 1227 },
+            { id: "n6", region: "nomad", name: "토욕혼", startText: "313년경", endText: "663년", duration: "약 350년", note: "선비족 일파 모용토욕혼 건국, 토번에 멸망", start: 313, end: 663 }
+        ];
+
+        function formatAxisYear(year) {
+            return year < 0 ? `B.C. ${Math.abs(year)}` : `A.D. ${year}`;
+        }
+
+        function initCheckboxes() {
+            const container = document.getElementById('countryList');
+            container.innerHTML = '';
+
+            const regions = [
+                { id: 'korea', title: '한국 왕조' },
+                { id: 'china', title: '중국 왕조' },
+                { id: 'japan', title: '일본 왕조' },
+                { id: 'nomad', title: '북방 민족' }
+            ];
+
+            regions.forEach(region => {
+                const regionData = historicalData
+                    .filter(d => d.region === region.id)
+                    .sort((a, b) => a.start - b.start);
+                
+                if (regionData.length === 0) return;
+
+                const groupDiv = document.createElement('div');
+                groupDiv.className = 'region-group';
+                
+                const titleDiv = document.createElement('div');
+                titleDiv.className = 'region-title';
+                titleDiv.innerText = region.title;
+                groupDiv.appendChild(titleDiv);
+
+                const itemsDiv = document.createElement('div');
+                itemsDiv.className = 'region-items';
+
+                regionData.forEach(data => {
+                    const label = document.createElement('label');
+                    label.innerHTML = `<input type="checkbox" class="country-check" value="${data.id}" checked> ${data.name}`;
+                    itemsDiv.appendChild(label);
+                });
+
+                groupDiv.appendChild(itemsDiv);
+                container.appendChild(groupDiv);
+            });
+
+            // ★ 추가된 부분: 체크박스 영역 전체에 'change' 이벤트를 달아서,
+            // 체크박스를 누를 때마다 자동으로 drawTimeline 함수가 실행되게 합니다.
+            container.addEventListener('change', function(e) {
+                if(e.target.classList.contains('country-check')) {
+                    drawTimeline();
+                }
+            });
+        }
+
+        function drawTimeline() {
+            const chart = document.getElementById('chart');
+            const axis = document.getElementById('axis');
+            chart.innerHTML = '';
+            axis.innerHTML = '';
+
+            const checkedBoxes = document.querySelectorAll('.country-check:checked');
+            const selectedIds = Array.from(checkedBoxes).map(cb => cb.value);
+            const selectedData = historicalData.filter(d => selectedIds.includes(d.id));
+
+            if (selectedData.length === 0) {
+                chart.innerHTML = '<p style="text-align:center; padding: 20px; color: #7f8c8d;">선택된 국가가 없습니다.</p>';
+                return;
+            }
+
+            selectedData.sort((a, b) => a.start - b.start);
+
+            const minYear = Math.min(...selectedData.map(d => d.start)) - 100;
+            const maxYear = Math.max(...selectedData.map(d => d.end)) + 100;
+            const totalYears = maxYear - minYear;
+
+            for (let i = 0; i <= 6; i++) {
+                const yearMark = minYear + (totalYears / 6) * i;
+                const span = document.createElement('span');
+                span.style.left = `${(i / 6) * 100}%`;
+                span.innerText = formatAxisYear(Math.round(yearMark));
+                axis.appendChild(span);
+            }
+
+            const tooltip = document.getElementById('tooltip');
+
+            selectedData.forEach(data => {
+                const leftPercent = ((data.start - minYear) / totalYears) * 100;
+                const widthPercent = ((data.end - data.start) / totalYears) * 100;
+
+                const track = document.createElement('div');
+                track.className = 'timeline-track';
+
+                const bar = document.createElement('div');
+                bar.className = `bar ${data.region}`;
+                bar.style.left = `${leftPercent}%`;
+                bar.style.width = `max(${widthPercent}%, 30px)`; 
+                
+                bar.innerText = `${data.name}`;
+
+                bar.addEventListener('mousemove', (e) => {
+                    tooltip.style.display = 'block';
+                    tooltip.style.left = e.pageX + 15 + 'px';
+                    tooltip.style.top = e.pageY + 15 + 'px';
+                    
+                    let noteHtml = data.note ? `<div class="note">※ ${data.note}</div>` : '';
+                    
+                    tooltip.innerHTML = `
+                        <h4>${data.name}</h4>
+                        <p><strong>존속 기간:</strong> ${data.startText} ~ ${data.endText}</p>
+                        <p><strong>유지 기간:</strong> ${data.duration}</p>
+                        ${noteHtml}
+                    `;
+                });
+
+                bar.addEventListener('mouseout', () => {
+                    tooltip.style.display = 'none';
+                });
+
+                track.appendChild(bar);
+                chart.appendChild(track);
+            });
+        }
+
+        function toggleAllCheckboxes(isChecked) {
+            document.querySelectorAll('.country-check').forEach(cb => cb.checked = isChecked);
+            drawTimeline();
+        }
+
+        document.getElementById('selectAllBtn').addEventListener('click', () => toggleAllCheckboxes(true));
+        document.getElementById('deselectAllBtn').addEventListener('click', () => toggleAllCheckboxes(false));
+
+        // 초기화 및 최초 실행
+        initCheckboxes();
+        drawTimeline(); 
+
+    </script>
+</body>
+</html>
