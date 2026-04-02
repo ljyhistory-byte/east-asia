@@ -66,6 +66,43 @@
         .secondary-btn { background-color: #95a5a6; }
         .secondary-btn:hover { background-color: #7f8c8d; }
 
+        /* ★ 일괄 적용 팔레트 스타일 */
+        .global-palette {
+            background-color: #f1f2f6;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            box-shadow: inset 0 0 5px rgba(0,0,0,0.05);
+        }
+        
+        .global-palette p {
+            margin: 0 0 10px 0;
+            font-size: 13px;
+            font-weight: bold;
+            color: #2c3e50;
+        }
+
+        .palette-colors {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .palette-swatch {
+            width: 26px;
+            height: 26px;
+            border-radius: 50%;
+            cursor: pointer;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+            transition: transform 0.2s, border 0.2s;
+            border: 2px solid transparent;
+        }
+
+        .palette-swatch:hover {
+            transform: scale(1.2);
+            border-color: #2c3e50;
+        }
+
         .region-group { margin-bottom: 20px; }
         .region-title {
             font-weight: bold;
@@ -86,21 +123,33 @@
             font-size: 12px;
             display: flex;
             align-items: center;
-            transition: opacity 0.3s ease; /* 흐려지는 효과 애니메이션 */
+            transition: opacity 0.3s ease;
         }
 
-        /* ★ 관계 표시 뱃지 스타일 추가 */
+        .country-color {
+            -webkit-appearance: none;
+            border: none;
+            width: 16px;
+            height: 16px;
+            padding: 0;
+            margin: 0 6px;
+            cursor: pointer;
+            background: none;
+        }
+        .country-color::-webkit-color-swatch-wrapper { padding: 0; }
+        .country-color::-webkit-color-swatch { border: 1px solid #bdc3c7; border-radius: 3px; }
+
         .badge {
             font-size: 10px;
             padding: 2px 5px;
             border-radius: 10px;
-            margin-left: 6px;
+            margin-left: auto;
             font-weight: bold;
             white-space: nowrap;
         }
-        .badge.overlap { background-color: #ffeaa7; color: #d35400; border: 1px solid #fdcb6e; } /* 동시대 */
-        .badge.prev { background-color: #dff9fb; color: #22a6b3; border: 1px solid #c7ecee; } /* 이전 */
-        .badge.next { background-color: #f1f2f6; color: #57606f; border: 1px solid #ced6e0; } /* 이후 */
+        .badge.overlap { background-color: #ffeaa7; color: #d35400; border: 1px solid #fdcb6e; }
+        .badge.prev { background-color: #dff9fb; color: #22a6b3; border: 1px solid #c7ecee; }
+        .badge.next { background-color: #f1f2f6; color: #57606f; border: 1px solid #ced6e0; }
 
         /* 타임라인 캔버스 */
         .timeline-area {
@@ -140,6 +189,15 @@
             margin-bottom: 10px;
             background-color: transparent;
             border-bottom: 1px dashed #ecf0f1;
+            cursor: grab;
+            transition: background-color 0.2s;
+        }
+        
+        .timeline-track:active { cursor: grabbing; }
+        .timeline-track.dragging {
+            opacity: 0.5;
+            background-color: #f1f2f6;
+            box-shadow: inset 0 0 5px rgba(0,0,0,0.1);
         }
 
         .bar {
@@ -156,7 +214,7 @@
             box-shadow: 0 2px 4px rgba(0,0,0,0.2);
             color: white;
             cursor: pointer;
-            transition: all 0.2s ease;
+            transition: filter 0.2s, transform 0.2s;
         }
 
         .bar:hover {
@@ -165,11 +223,6 @@
             z-index: 10;
             border: 2px solid #fff;
         }
-
-        .bar.korea { background-color: #3498db; }
-        .bar.china { background-color: #e74c3c; }
-        .bar.japan { background-color: #2ecc71; }
-        .bar.nomad { background-color: #f39c12; }
         
         #tooltip {
             position: fixed;
@@ -205,10 +258,10 @@
     <h1>동아시아 국가 유지 기간 시각화</h1>
     
     <div class="legend">
-        <div><span style="background-color: #3498db;"></span>한국</div>
-        <div><span style="background-color: #e74c3c;"></span>중국</div>
-        <div><span style="background-color: #2ecc71;"></span>일본</div>
-        <div><span style="background-color: #f39c12;"></span>북방민족</div>
+        <div><span style="background-color: #3498db;"></span>한국 (기본)</div>
+        <div><span style="background-color: #e74c3c;"></span>중국 (기본)</div>
+        <div><span style="background-color: #2ecc71;"></span>일본 (기본)</div>
+        <div><span style="background-color: #f39c12;"></span>북방민족 (기본)</div>
     </div>
 
     <div class="container">
@@ -218,7 +271,35 @@
                 <button id="selectAllBtn" class="secondary-btn">전체 선택</button>
                 <button id="deselectAllBtn" class="secondary-btn">전체 해제</button>
             </div>
-            <p style="font-size: 12px; color: #7f8c8d; margin-top: 0;">※ 선택한 국가를 기준으로 주변 시기 국가들이 표시됩니다.</p>
+
+            <div class="global-palette">
+                <p>🎨 추천 팔레트 (클릭 시 체크된 국가에 일괄 적용)</p>
+                <div class="palette-colors">
+                    <div class="palette-swatch" style="background-color: #e74c3c;" data-color="#e74c3c" title="빨강"></div>
+                    <div class="palette-swatch" style="background-color: #e67e22;" data-color="#e67e22" title="주황"></div>
+                    <div class="palette-swatch" style="background-color: #f1c40f;" data-color="#f1c40f" title="노랑"></div>
+                    <div class="palette-swatch" style="background-color: #2ecc71;" data-color="#2ecc71" title="초록"></div>
+                    <div class="palette-swatch" style="background-color: #1abc9c;" data-color="#1abc9c" title="청록"></div>
+                    <div class="palette-swatch" style="background-color: #3498db;" data-color="#3498db" title="파랑"></div>
+                    <div class="palette-swatch" style="background-color: #9b59b6;" data-color="#9b59b6" title="보라"></div>
+                    <div class="palette-swatch" style="background-color: #34495e;" data-color="#34495e" title="남색"></div>
+                    <div class="palette-swatch" style="background-color: #95a5a6;" data-color="#95a5a6" title="회색"></div>
+                    <div class="palette-swatch" style="background-color: #ecf0f1;" data-color="#ecf0f1" title="연회색(배경용)"></div>
+                </div>
+            </div>
+
+            <datalist id="preset-colors">
+                <option value="#e74c3c">
+                <option value="#e67e22">
+                <option value="#f1c40f">
+                <option value="#2ecc71">
+                <option value="#1abc9c">
+                <option value="#3498db">
+                <option value="#9b59b6">
+                <option value="#34495e">
+                <option value="#95a5a6">
+            </datalist>
+
             <div id="countryList"></div>
         </aside>
 
@@ -232,53 +313,53 @@
 
     <script>
         const historicalData = [
-            { id: "c1", region: "china", name: "주 (서주/동주)", startText: "BC 1046년경", endText: "BC 256년", duration: "약 790년", note: "기원전 770년 낙읍 천도를 기점으로 서주/동주로 나뉨", start: -1046, end: -256 },
-            { id: "c2", region: "china", name: "춘추전국시대", startText: "BC 770년", endText: "BC 221년", duration: "약 549년", note: "동주 시대와 겹치며, 진(秦)의 통일로 종결", start: -770, end: -221 },
-            { id: "c3", region: "china", name: "진 (통일왕조)", startText: "BC 221년", endText: "BC 206년", duration: "15년", note: "제국 통일(BC 221) 기준 (제후국 시절 포함 시 더 김)", start: -221, end: -206 },
-            { id: "c4", region: "china", name: "한 (전한/후한)", startText: "BC 202년", endText: "AD 220년", duration: "406년", note: "신(新)나라(AD 8~23) 단절기 15년 제외", start: -202, end: 220 },
-            { id: "c5", region: "china", name: "서진", startText: "266년", endText: "316년", duration: "50년", note: "280년에 삼국 통일", start: 266, end: 316 },
-            { id: "c6", region: "china", name: "동진", startText: "317년", endText: "420년", duration: "103년", note: "", start: 317, end: 420 },
-            { id: "c7", region: "china", name: "북위", startText: "386년", endText: "534년", duration: "148년", note: "439년 화북 통일", start: 386, end: 534 },
-            { id: "c8", region: "china", name: "동위", startText: "534년", endText: "550년", duration: "16년", note: "북위에서 분열", start: 534, end: 550 },
-            { id: "c9", region: "china", name: "서위", startText: "535년", endText: "557년", duration: "22년", note: "북위에서 분열", start: 535, end: 557 },
-            { id: "c10", region: "china", name: "북주", startText: "557년", endText: "581년", duration: "24년", note: "서위의 뒤를 이음", start: 557, end: 581 },
-            { id: "c11", region: "china", name: "북제", startText: "550년", endText: "577년", duration: "27년", note: "동위의 뒤를 이음", start: 550, end: 577 },
-            { id: "c12", region: "china", name: "송 (남조/유송)", startText: "420년", endText: "479년", duration: "59년", note: "동진 멸망 후 건국", start: 420, end: 479 },
-            { id: "c13", region: "china", name: "제 (남조/남제)", startText: "479년", endText: "502년", duration: "23년", note: "", start: 479, end: 502 },
-            { id: "c14", region: "china", name: "양 (남조)", startText: "502년", endText: "557년", duration: "55년", note: "", start: 502, end: 557 },
-            { id: "c15", region: "china", name: "진 (남조)", startText: "557년", endText: "589년", duration: "32년", note: "수나라에 의해 멸망", start: 557, end: 589 },
-            { id: "c16", region: "china", name: "수", startText: "581년", endText: "618년", duration: "37년", note: "589년 남북조 통일", start: 581, end: 618 },
-            { id: "c17", region: "china", name: "당", startText: "618년", endText: "907년", duration: "289년", note: "무주(측천무후) 시기 포함", start: 618, end: 907 },
-            { id: "c18", region: "china", name: "오대십국", startText: "907년", endText: "979년", duration: "72년", note: "당 멸망부터 북송의 통일까지의 혼란기", start: 907, end: 979 },
-            { id: "c19_1", region: "china", name: "북송", startText: "960년", endText: "1127년", duration: "167년", note: "정강의 변(1127년)으로 화북 상실 및 남하", start: 960, end: 1127 },
-            { id: "c19_2", region: "china", name: "남송", startText: "1127년", endText: "1279년", duration: "152년", note: "임안(항저우)으로 천도하여 명맥 유지, 애산 전투에서 멸망", start: 1127, end: 1279 },
-            { id: "c20", region: "china", name: "요 (거란)", startText: "916년", endText: "1125년", duration: "209년", note: "", start: 916, end: 1125 },
-            { id: "c21", region: "china", name: "금 (여진)", startText: "1115년", endText: "1234년", duration: "119년", note: "", start: 1115, end: 1234 },
-            { id: "c22", region: "china", name: "원 (몽골)", startText: "1271년", endText: "1368년", duration: "97년", note: "국호를 '대원'으로 고친 시점~북주(몽골 초원 퇴각) 기준", start: 1271, end: 1368 },
-            { id: "c23", region: "china", name: "명", startText: "1368년", endText: "1644년", duration: "276년", note: "", start: 1368, end: 1644 },
-            { id: "c24", region: "china", name: "청", startText: "1636년", endText: "1912년", duration: "276년", note: "국호를 '청'으로 고친 시점(1636) ~ 신해혁명 멸망 기준", start: 1636, end: 1912 },
+            { id: "c1", region: "china", name: "주 (서주/동주)", startText: "BC 1046년경", endText: "BC 256년", duration: "약 790년", note: "기원전 770년 낙읍 천도를 기점으로 서주/동주로 나뉨", start: -1046, end: -256, color: "#e74c3c" },
+            { id: "c2", region: "china", name: "춘추전국시대", startText: "BC 770년", endText: "BC 221년", duration: "약 549년", note: "동주 시대와 겹치며, 진(秦)의 통일로 종결", start: -770, end: -221, color: "#e74c3c" },
+            { id: "c3", region: "china", name: "진 (통일왕조)", startText: "BC 221년", endText: "BC 206년", duration: "15년", note: "제국 통일(BC 221) 기준 (제후국 시절 포함 시 더 김)", start: -221, end: -206, color: "#e74c3c" },
+            { id: "c4", region: "china", name: "한 (전한/후한)", startText: "BC 202년", endText: "AD 220년", duration: "406년", note: "신(新)나라(AD 8~23) 단절기 15년 제외", start: -202, end: 220, color: "#e74c3c" },
+            { id: "c5", region: "china", name: "서진", startText: "266년", endText: "316년", duration: "50년", note: "280년에 삼국 통일", start: 266, end: 316, color: "#e74c3c" },
+            { id: "c6", region: "china", name: "동진", startText: "317년", endText: "420년", duration: "103년", note: "", start: 317, end: 420, color: "#e74c3c" },
+            { id: "c7", region: "china", name: "북위", startText: "386년", endText: "534년", duration: "148년", note: "439년 화북 통일", start: 386, end: 534, color: "#e74c3c" },
+            { id: "c8", region: "china", name: "동위", startText: "534년", endText: "550년", duration: "16년", note: "북위에서 분열", start: 534, end: 550, color: "#e74c3c" },
+            { id: "c9", region: "china", name: "서위", startText: "535년", endText: "557년", duration: "22년", note: "북위에서 분열", start: 535, end: 557, color: "#e74c3c" },
+            { id: "c10", region: "china", name: "북주", startText: "557년", endText: "581년", duration: "24년", note: "서위의 뒤를 이음", start: 557, end: 581, color: "#e74c3c" },
+            { id: "c11", region: "china", name: "북제", startText: "550년", endText: "577년", duration: "27년", note: "동위의 뒤를 이음", start: 550, end: 577, color: "#e74c3c" },
+            { id: "c12", region: "china", name: "송 (남조/유송)", startText: "420년", endText: "479년", duration: "59년", note: "동진 멸망 후 건국", start: 420, end: 479, color: "#e74c3c" },
+            { id: "c13", region: "china", name: "제 (남조/남제)", startText: "479년", endText: "502년", duration: "23년", note: "", start: 479, end: 502, color: "#e74c3c" },
+            { id: "c14", region: "china", name: "양 (남조)", startText: "502년", endText: "557년", duration: "55년", note: "", start: 502, end: 557, color: "#e74c3c" },
+            { id: "c15", region: "china", name: "진 (남조)", startText: "557년", endText: "589년", duration: "32년", note: "수나라에 의해 멸망", start: 557, end: 589, color: "#e74c3c" },
+            { id: "c16", region: "china", name: "수", startText: "581년", endText: "618년", duration: "37년", note: "589년 남북조 통일", start: 581, end: 618, color: "#e74c3c" },
+            { id: "c17", region: "china", name: "당", startText: "618년", endText: "907년", duration: "289년", note: "무주(측천무후) 시기 포함", start: 618, end: 907, color: "#e74c3c" },
+            { id: "c18", region: "china", name: "오대십국", startText: "907년", endText: "979년", duration: "72년", note: "당 멸망부터 북송의 통일까지의 혼란기", start: 907, end: 979, color: "#e74c3c" },
+            { id: "c19_1", region: "china", name: "북송", startText: "960년", endText: "1127년", duration: "167년", note: "정강의 변(1127년)으로 화북 상실 및 남하", start: 960, end: 1127, color: "#e74c3c" },
+            { id: "c19_2", region: "china", name: "남송", startText: "1127년", endText: "1279년", duration: "152년", note: "임안(항저우)으로 천도하여 명맥 유지, 애산 전투에서 멸망", start: 1127, end: 1279, color: "#e74c3c" },
+            { id: "c20", region: "china", name: "요 (거란)", startText: "916년", endText: "1125년", duration: "209년", note: "", start: 916, end: 1125, color: "#e74c3c" },
+            { id: "c21", region: "china", name: "금 (여진)", startText: "1115년", endText: "1234년", duration: "119년", note: "", start: 1115, end: 1234, color: "#e74c3c" },
+            { id: "c22", region: "china", name: "원 (몽골)", startText: "1271년", endText: "1368년", duration: "97년", note: "국호를 '대원'으로 고친 시점~북주(몽골 초원 퇴각) 기준", start: 1271, end: 1368, color: "#e74c3c" },
+            { id: "c23", region: "china", name: "명", startText: "1368년", endText: "1644년", duration: "276년", note: "", start: 1368, end: 1644, color: "#e74c3c" },
+            { id: "c24", region: "china", name: "청", startText: "1636년", endText: "1912년", duration: "276년", note: "국호를 '청'으로 고친 시점(1636) ~ 신해혁명 멸망 기준", start: 1636, end: 1912, color: "#e74c3c" },
             
-            { id: "j1", region: "japan", name: "야마토 정권", startText: "3세기 중후반", endText: "710년", duration: "약 400년 이상", note: "정확한 성립 연도는 불명확 (고분 시대)", start: 250, end: 710 },
-            { id: "j2", region: "japan", name: "나라 시대", startText: "710년", endText: "794년", duration: "84년", note: "헤이조쿄(나라) 도읍 시기", start: 710, end: 794 },
-            { id: "j3", region: "japan", name: "헤이안 시대", startText: "794년", endText: "1185년", duration: "391년", note: "헤이안쿄(교토) 천도 ~ 가마쿠라 막부 성립 전", start: 794, end: 1185 },
-            { id: "j4", region: "japan", name: "가마쿠라 막부", startText: "1185년", endText: "1333년", duration: "148년", note: "미나모토노 요리토모의 슈고/지토 설치(1185) 기준", start: 1185, end: 1333 },
-            { id: "j5", region: "japan", name: "무로마치 막부", startText: "1336년", endText: "1573년", duration: "237년", note: "아시카가 타카우지 건국 ~ 오다 노부나가에 의한 멸망", start: 1336, end: 1573 },
-            { id: "j6", region: "japan", name: "센고쿠 시대", startText: "1467년", endText: "1615년", duration: "약 148년", note: "오닌의 난(1467) ~ 오사카 여름의 진(1615) 통상적 기준", start: 1467, end: 1615 },
-            { id: "j7", region: "japan", name: "에도 막부", startText: "1603년", endText: "1868년", duration: "265년", note: "도쿠가와 이에야스 취임 ~ 대정봉환/메이지 유신", start: 1603, end: 1868 },
+            { id: "j1", region: "japan", name: "야마토 정권", startText: "3세기 중후반", endText: "710년", duration: "약 400년 이상", note: "정확한 성립 연도는 불명확 (고분 시대)", start: 250, end: 710, color: "#2ecc71" },
+            { id: "j2", region: "japan", name: "나라 시대", startText: "710년", endText: "794년", duration: "84년", note: "헤이조쿄(나라) 도읍 시기", start: 710, end: 794, color: "#2ecc71" },
+            { id: "j3", region: "japan", name: "헤이안 시대", startText: "794년", endText: "1185년", duration: "391년", note: "헤이안쿄(교토) 천도 ~ 가마쿠라 막부 성립 전", start: 794, end: 1185, color: "#2ecc71" },
+            { id: "j4", region: "japan", name: "가마쿠라 막부", startText: "1185년", endText: "1333년", duration: "148년", note: "미나모토노 요리토모의 슈고/지토 설치(1185) 기준", start: 1185, end: 1333, color: "#2ecc71" },
+            { id: "j5", region: "japan", name: "무로마치 막부", startText: "1336년", endText: "1573년", duration: "237년", note: "아시카가 타카우지 건국 ~ 오다 노부나가에 의한 멸망", start: 1336, end: 1573, color: "#2ecc71" },
+            { id: "j6", region: "japan", name: "센고쿠 시대", startText: "1467년", endText: "1615년", duration: "약 148년", note: "오닌의 난(1467) ~ 오사카 여름의 진(1615) 통상적 기준", start: 1467, end: 1615, color: "#2ecc71" },
+            { id: "j7", region: "japan", name: "에도 막부", startText: "1603년", endText: "1868년", duration: "265년", note: "도쿠가와 이에야스 취임 ~ 대정봉환/메이지 유신", start: 1603, end: 1868, color: "#2ecc71" },
             
-            { id: "k1", region: "korea", name: "고조선", startText: "BC 2333년(신화)", endText: "BC 108년", duration: "약 2,225년(전승)", note: "실질적인 연맹국가는 기원전 4~5세기경 추정", start: -2333, end: -108 },
-            { id: "k2", region: "korea", name: "고구려", startText: "BC 37년", endText: "AD 668년", duration: "704년", note: "삼국사기 기준 연도", start: -37, end: 668 },
-            { id: "k3", region: "korea", name: "백제", startText: "BC 18년", endText: "AD 660년", duration: "677년", note: "삼국사기 기준 연도", start: -18, end: 660 },
-            { id: "k4", region: "korea", name: "신라", startText: "BC 57년", endText: "AD 935년", duration: "991년", note: "이른바 '천년 왕국'", start: -57, end: 935 },
-            { id: "k5", region: "korea", name: "고려", startText: "918년", endText: "1392년", duration: "474년", note: "", start: 918, end: 1392 },
-            { id: "k6", region: "korea", name: "조선", startText: "1392년", endText: "1910년", duration: "518년", note: "1897년 선포된 대한제국 시기 포함", start: 1392, end: 1910 },
+            { id: "k1", region: "korea", name: "고조선", startText: "BC 2333년(신화)", endText: "BC 108년", duration: "약 2,225년(전승)", note: "실질적인 연맹국가는 기원전 4~5세기경 추정", start: -2333, end: -108, color: "#3498db" },
+            { id: "k2", region: "korea", name: "고구려", startText: "BC 37년", endText: "AD 668년", duration: "704년", note: "삼국사기 기준 연도", start: -37, end: 668, color: "#3498db" },
+            { id: "k3", region: "korea", name: "백제", startText: "BC 18년", endText: "AD 660년", duration: "677년", note: "삼국사기 기준 연도", start: -18, end: 660, color: "#3498db" },
+            { id: "k4", region: "korea", name: "신라", startText: "BC 57년", endText: "AD 935년", duration: "991년", note: "이른바 '천년 왕국'", start: -57, end: 935, color: "#3498db" },
+            { id: "k5", region: "korea", name: "고려", startText: "918년", endText: "1392년", duration: "474년", note: "", start: 918, end: 1392, color: "#3498db" },
+            { id: "k6", region: "korea", name: "조선", startText: "1392년", endText: "1910년", duration: "518년", note: "1897년 선포된 대한제국 시기 포함", start: 1392, end: 1910, color: "#3498db" },
             
-            { id: "n1", region: "nomad", name: "흉노", startText: "BC 3세기 말", endText: "AD 1세기 말", duration: "약 300년", note: "묵돌 선우의 통일(BC 209년경) 기준", start: -210, end: 90 },
-            { id: "n2", region: "nomad", name: "유연", startText: "330년", endText: "555년", duration: "225년", note: "돌궐에 의해 멸망", start: 330, end: 555 },
-            { id: "n3", region: "nomad", name: "돌궐", startText: "552년", endText: "744년", duration: "192년", note: "1제국, 동서분열, 2제국 시기 합산", start: 552, end: 744 },
-            { id: "n4", region: "nomad", name: "토번 (티베트)", startText: "618년", endText: "842년", duration: "224년", note: "송첸캄포의 통일 ~ 랑다르마 왕 암살 후 분열", start: 618, end: 842 },
-            { id: "n5", region: "nomad", name: "서하 (탕구트)", startText: "1038년", endText: "1227년", duration: "189년", note: "이원호 건국 ~ 몽골 제국에 의해 멸망", start: 1038, end: 1227 },
-            { id: "n6", region: "nomad", name: "토욕혼", startText: "313년경", endText: "663년", duration: "약 350년", note: "선비족 일파 모용토욕혼 건국, 토번에 멸망", start: 313, end: 663 }
+            { id: "n1", region: "nomad", name: "흉노", startText: "BC 3세기 말", endText: "AD 1세기 말", duration: "약 300년", note: "묵돌 선우의 통일(BC 209년경) 기준", start: -210, end: 90, color: "#f39c12" },
+            { id: "n2", region: "nomad", name: "유연", startText: "330년", endText: "555년", duration: "225년", note: "돌궐에 의해 멸망", start: 330, end: 555, color: "#f39c12" },
+            { id: "n3", region: "nomad", name: "돌궐", startText: "552년", endText: "744년", duration: "192년", note: "1제국, 동서분열, 2제국 시기 합산", start: 552, end: 744, color: "#f39c12" },
+            { id: "n4", region: "nomad", name: "토번 (티베트)", startText: "618년", endText: "842년", duration: "224년", note: "송첸캄포의 통일 ~ 랑다르마 왕 암살 후 분열", start: 618, end: 842, color: "#f39c12" },
+            { id: "n5", region: "nomad", name: "서하 (탕구트)", startText: "1038년", endText: "1227년", duration: "189년", note: "이원호 건국 ~ 몽골 제국에 의해 멸망", start: 1038, end: 1227, color: "#f39c12" },
+            { id: "n6", region: "nomad", name: "토욕혼", startText: "313년경", endText: "663년", duration: "약 350년", note: "선비족 일파 모용토욕혼 건국, 토번에 멸망", start: 313, end: 663, color: "#f39c12" }
         ];
 
         function formatAxisYear(year) {
@@ -316,9 +397,13 @@
 
                 regionData.forEach(data => {
                     const label = document.createElement('label');
-                    // data-id 속성 추가 (나중에 뱃지 달 때 찾기 쉬움)
                     label.setAttribute('data-id', data.id);
-                    label.innerHTML = `<input type="checkbox" class="country-check" value="${data.id}" checked> ${data.name}`;
+                    // list="preset-colors" 속성 추가 (네이티브 컬러 피커에 팔레트 연동)
+                    label.innerHTML = `
+                        <input type="checkbox" class="country-check" value="${data.id}" checked>
+                        <input type="color" class="country-color" list="preset-colors" data-id="${data.id}" value="${data.color}" title="색상 변경">
+                        ${data.name}
+                    `;
                     itemsDiv.appendChild(label);
                 });
 
@@ -331,13 +416,48 @@
                     drawTimeline();
                 }
             });
+
+            container.addEventListener('input', function(e) {
+                if(e.target.classList.contains('country-color')) {
+                    const id = e.target.getAttribute('data-id');
+                    const targetData = historicalData.find(d => d.id === id);
+                    if(targetData) {
+                        targetData.color = e.target.value;
+                        const bar = document.querySelector(`.bar[data-id="${id}"]`);
+                        if(bar) {
+                            bar.style.backgroundColor = e.target.value;
+                        }
+                    }
+                }
+            });
         }
 
-        // ★ 새로 추가된 핵심 기능: 선택된 국가와 연관된 뱃지 표시
+        // ★ 일괄 팔레트 클릭 이벤트
+        document.querySelectorAll('.palette-swatch').forEach(swatch => {
+            swatch.addEventListener('click', function() {
+                const newColor = this.getAttribute('data-color');
+                const checkedBoxes = document.querySelectorAll('.country-check:checked');
+
+                checkedBoxes.forEach(cb => {
+                    const id = cb.value;
+                    
+                    // 1. 데이터베이스 색상 업데이트
+                    const targetData = historicalData.find(d => d.id === id);
+                    if(targetData) targetData.color = newColor;
+
+                    // 2. 좌측 패널의 네모난 컬러 피커 색상 업데이트
+                    const colorInput = document.querySelector(`.country-color[data-id="${id}"]`);
+                    if(colorInput) colorInput.value = newColor;
+
+                    // 3. 우측 타임라인 막대 색상 실시간 업데이트 (드래그 순서 유지)
+                    const bar = document.querySelector(`.bar[data-id="${id}"]`);
+                    if(bar) bar.style.backgroundColor = newColor;
+                });
+            });
+        });
+
         function updateRelationBadges(selectedData) {
             const labels = document.querySelectorAll('.region-items label');
-            
-            // 모든 국가가 선택되었거나 아예 선택이 없을 때는 초기화
             const isAllOrNone = selectedData.length === 0 || selectedData.length === historicalData.length;
 
             labels.forEach(label => {
@@ -345,12 +465,11 @@
                 const id = cb.value;
                 const data = historicalData.find(d => d.id === id);
 
-                // 기존 뱃지 제거
                 const existingBadge = label.querySelector('.badge');
                 if (existingBadge) existingBadge.remove();
 
                 if (isAllOrNone || cb.checked) {
-                    label.style.opacity = "1"; // 투명도 원상복구
+                    label.style.opacity = "1";
                     return;
                 }
 
@@ -358,18 +477,14 @@
                 let isPrev = false;
                 let isNext = false;
 
-                // 선택된 국가들과 현재 국가(data)의 연도 비교
                 for (let s of selectedData) {
-                    // 1. 동시대 (서로 기간이 겹침)
                     if (data.start < s.end && data.end > s.start) {
                         isOverlap = true;
-                        break; // 겹치면 가장 강력한 연관이므로 더 볼 필요 없음
+                        break;
                     }
-                    // 2. 이전 (선택된 국가 시작점 기준, 최대 100년 전 안에 멸망함)
                     else if (data.end <= s.start && data.end >= s.start - 100) {
                         isPrev = true;
                     }
-                    // 3. 이후 (선택된 국가 멸망점 기준, 최대 100년 후 안에 건국함)
                     else if (data.start >= s.end && data.start <= s.end + 100) {
                         isNext = true;
                     }
@@ -378,7 +493,7 @@
                 let badgeHtml = '';
                 if (isOverlap) {
                     badgeHtml = `<span class="badge overlap">동시대</span>`;
-                    label.style.opacity = "1"; // 관련 있으면 또렷하게
+                    label.style.opacity = "1";
                 } else if (isPrev) {
                     badgeHtml = `<span class="badge prev">이전</span>`;
                     label.style.opacity = "1";
@@ -386,7 +501,6 @@
                     badgeHtml = `<span class="badge next">이후</span>`;
                     label.style.opacity = "1";
                 } else {
-                    // ★ 연관성이 전혀 없는 국가는 반투명 처리하여 시선 분산 방지!
                     label.style.opacity = "0.3";
                 }
 
@@ -406,7 +520,6 @@
             const selectedIds = Array.from(checkedBoxes).map(cb => cb.value);
             const selectedData = historicalData.filter(d => selectedIds.includes(d.id));
 
-            // 그리기 직후 뱃지 업데이트 함수 호출
             updateRelationBadges(selectedData);
 
             if (selectedData.length === 0) {
@@ -436,11 +549,14 @@
 
                 const track = document.createElement('div');
                 track.className = 'timeline-track';
+                track.setAttribute('draggable', 'true');
 
                 const bar = document.createElement('div');
-                bar.className = `bar ${data.region}`;
+                bar.className = `bar`; 
+                bar.setAttribute('data-id', data.id); 
                 bar.style.left = `${leftPercent}%`;
                 bar.style.width = `max(${widthPercent}%, 30px)`; 
+                bar.style.backgroundColor = data.color; 
                 
                 bar.innerText = `${data.name}`;
 
@@ -478,6 +594,54 @@
 
         initCheckboxes();
         drawTimeline(); 
+
+        const chartArea = document.getElementById('chart');
+        let draggedTrack = null;
+
+        chartArea.addEventListener('dragstart', (e) => {
+            const track = e.target.closest('.timeline-track');
+            if (track) {
+                draggedTrack = track;
+                setTimeout(() => track.classList.add('dragging'), 0);
+                document.getElementById('tooltip').style.display = 'none';
+            }
+        });
+
+        chartArea.addEventListener('dragend', (e) => {
+            const track = e.target.closest('.timeline-track');
+            if (track) {
+                track.classList.remove('dragging');
+                draggedTrack = null;
+            }
+        });
+
+        chartArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            const afterElement = getDragAfterElement(chartArea, e.clientY);
+            
+            if (draggedTrack) {
+                if (afterElement == null) {
+                    chartArea.appendChild(draggedTrack);
+                } else {
+                    chartArea.insertBefore(draggedTrack, afterElement);
+                }
+            }
+        });
+
+        function getDragAfterElement(container, y) {
+            const draggableElements = [...container.querySelectorAll('.timeline-track:not(.dragging)')];
+
+            return draggableElements.reduce((closest, child) => {
+                const box = child.getBoundingClientRect();
+                const offset = y - box.top - box.height / 2;
+                
+                if (offset < 0 && offset > closest.offset) {
+                    return { offset: offset, element: child };
+                } else {
+                    return closest;
+                }
+            }, { offset: Number.NEGATIVE_INFINITY }).element;
+        }
 
     </script>
 </body>
